@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background: #f4f4f4;
+            color: #333;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        nav {
+            background-color: #103440;
+            height: 60px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: white;
+        }
+
+        nav .brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        nav .logout {
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+        }
+
+        .aside {
+            width: 250px;
+            background-color: #fff;
+            padding: 20px;
+            position: fixed;
+            top: 60px;
+            bottom: 0;
+            left: 0;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .aside h3 {
+            font-size: 18px;
+            color: #103440;
+            margin-bottom: 20px;
+        }
+
+        .aside a {
+            text-decoration: none;
+            color: #333;
+            display: block;
+            margin: 15px 0;
+            font-size: 16px;
+            padding: 10px;
+            transition: background 0.3s, color 0.3s;
+            cursor: pointer;
+        }
+
+        .aside a:hover,
+        .aside a.active {
+            background-color: #103440;
+            color: white;
+        }
+
+        .dashDisplay {
+            margin-left: 270px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .dashDisplay .card {
+            flex: 1;
+            min-width: 250px;
+            height: 100px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .dashDisplay .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .dashDisplay h3 {
+            font-size: 20px;
+            color: #103440;
+        }
+
+        #container {
+            margin-left: 270px;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #103440;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #0c2a35;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th,
+        table td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #103440;
+            color: white;
+        }
+
+        @media (max-width: 1200px) {
+            .dashDisplay {
+                margin-left: 0;
+                padding: 10px;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .dashDisplay .card {
+                width: 90%;
+            }
+
+            .aside {
+                display: none;
+            }
+
+            nav {
+                justify-content: space-around;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="brand">Admin Dashboard</div>
+        <button class="logout" id="logout">Logout</button>
+    </nav>
+
+    <aside class="aside">
+        <h3>Quick Links</h3>
+        <a href="#" id="agencyBtn">Add Agency</a>
+        <a href="#" id="routeBtn">Add Route</a>
+        <a href="#" id="ticketsBtn">View Tickets</a>
+        <a href="#" id="bookingsBtn">Bookings</a>
+    </aside>
+
+    <div class="dashDisplay">
+        <div class="card">
+            <h3 id="agencyCount">Agency(s): 0</h3>
+        </div>
+        <div class="card">
+            <h3 id="routeCount">Route(s): 0</h3>
+        </div>
+        <div class="card">
+            <h3 id="ticketCount">Tickets: 0</h3>
+        </div>
+        <div class="card">
+            <h3 id="bookingCount">Bookings: 0</h3>
+        </div>
+    </div>
+
+    <div id="container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        // Retrieve the stored user object
+        const loggedInUser = localStorage.getItem('loginedUser');
+
+        // Check if the user object exists and parse it
+        if (loggedInUser) {
+            const user = JSON.parse(loggedInUser);
+            const token = user.token;
+
+            // Set the token in the Axios headers
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        } else {
+            console.error('No user data found in local storage');
+            // window.location.href = "login.html"; // Redirect if no user data found
+        }
+
+        document.getElementById('logout').addEventListener('click', () => {
+            localStorage.clear();
+            // window.location.href = "login.html";
+        });
+
+        // Function to load the form into the container
+        const loadForm = (title, formContent) => {
+            document.getElementById('container').innerHTML = `
+                <h2>${title}</h2>
+                <form id="${title.toLowerCase()}Form">
+                    ${formContent}
+                    <button type="submit">Submit</button>
+                </form>
+            `;
+        };
+
+        // Function to load the tickets table into the container
+        const loadTicketsTable = (tickets) => {
+            const tableRows = tickets.map(ticket => `
+                <tr>
+                    <td>${ticket.id}</td>
+                    <td>${ticket.route}</td>
+                    <td>${ticket.agency}</td>
+                    <td>${ticket.availableSeats}</td>
+                    <td>${ticket.price}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('container').innerHTML = `
+                <h2>Available Tickets</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticket ID</th>
+                            <th>Route</th>
+                            <th>Agency</th>
+                            <th>Available Seats</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            `;
+        };
+
+        // Event listeners for buttons
+        document.getElementById('agencyBtn').addEventListener('click', () => {
+            const formContent = `
+                <div class="form-group">
+                    <label for="agencyName">Agency Name:</label>
+                    <input type="text" id="agencyName" name="agencyName" required>
+                </div>
+                <div class="form-group">
+                    <label for="agencyContact">Contact:</label>
+                    <input type="text" id="agencyContact" name="agencyContact" required>
+                </div>
+            `;
+            loadForm('Add Agency', formContent);
+        });
+
+        document.getElementById('routeBtn').addEventListener('click', () => {
+            const formContent = `
+                <div class="form-group">
+                    <label for="routeName">Route Name:</label>
+                    <input type="text" id="routeName" name="routeName" required>
+                </div>
+                <div class="form-group">
+                    <label for="routeDistance">Distance (km):</label>
+                    <input type="number" id="routeDistance" name="routeDistance" required>
+                </div>
+            `;
+            loadForm('Add Route', formContent);
+        });
+
+        document.getElementById('bookingsBtn').addEventListener('click', async () => {
+            try {
+                const response = await axios.get('https://webclass-backend.onrender.com/bookings/');
+                displayBookings(response.data);
+            } catch (error) {
+                console.error('Error fetching bookings:', error);
+            }
+        });
+
+        // Fetch and display counts
+        const fetchCounts = async () => {
+            try {
+                const [agencyResponse, routeResponse, ticketResponse, bookingResponse] = await Promise.all([
+                    axios.get('https://webclass-backend.onrender.com/agencies/'),
+                    axios.get('https://webclass-backend.onrender.com/routes/'),
+                    axios.get('https://webclass-backend.onrender.com/tickets/'),
+                    axios.get('https://webclass-backend.onrender.com/bookings/')
+                ]);
+
+                document.getElementById('agencyCount').textContent = `Agency(s): ${agencyResponse.data.agencies.length}`;
+                document.getElementById('routeCount').textContent = `Route(s): ${routeResponse.data.routes.length}`;
+                document.getElementById('ticketCount').textContent = `Tickets: ${ticketResponse.data.tickets.length}`;
+                document.getElementById('bookingCount').textContent = `Bookings: ${bookingResponse.data.bookings.length}`;
+            } catch (error) {
+                console.error('Error fetching counts:', error);
+            }
+        };
+
+        fetchCounts();
+    </script>
+</body>
+
+</html>
